@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -12,73 +11,18 @@ import (
 
 var docStyle = lipgloss.NewStyle().Margin(1, 2)
 
-type item struct {
-	title       string
-	description string
-}
-
-func (i item) Title() string       { return i.title }
-func (i item) Description() string { return i.description }
-func (i item) FilterValue() string { return i.title }
-
 type model struct {
-	list   list.Model
-	table  table.Model
+	list   ListModel
+	table  TableModel
 	width  int
 	height int
 	focus  string // "list" or "table"
 }
 
 func initialModel() model {
-	// 리스트 아이템 생성
-	items := []list.Item{
-		item{title: "Item 1", description: "Description for Item 1"},
-		item{title: "Item 2", description: "Description for Item 2"},
-		item{title: "Item 3", description: "Description for Item 3"},
-	}
-
-	// 리스트 설정
-	l := list.New(items, list.NewDefaultDelegate(), 0, 0)
-	l.Title = "Select an Item"
-
-	// 테이블 컬럼 설정
-	columns := []table.Column{
-		{Title: "ID", Width: 4},
-		{Title: "Name", Width: 20},
-		{Title: "Value", Width: 10},
-	}
-
-	// 테이블 데이터 설정
-	rows := []table.Row{
-		{"1", "Sample 1", "100"},
-		{"2", "Sample 2", "200"},
-		{"3", "Sample 3", "300"},
-	}
-
-	// 테이블 생성
-	t := table.New(
-		table.WithColumns(columns),
-		table.WithRows(rows),
-		table.WithFocused(true),
-		table.WithHeight(7),
-	)
-
-	// 테이블 스타일 설정
-	s := table.DefaultStyles()
-	s.Header = s.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).
-		BorderBottom(true).
-		Bold(true)
-	s.Selected = s.Selected.
-		Foreground(lipgloss.Color("229")).
-		Background(lipgloss.Color("57")).
-		Bold(true)
-	t.SetStyles(s)
-
 	return model{
-		list:  l,
-		table: t,
+		list:  NewListModel(),
+		table: NewTableModel(),
 		focus: "list", // 초기 포커스는 리스트에
 	}
 }
@@ -107,11 +51,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// 탭 키로 포커스 전환
 			if m.focus == "list" {
 				m.focus = "table"
-				m.list.SetShowHelp(false)
+				m.list.SetFocus(false)
 				m.table.Focus()
 			} else {
 				m.focus = "list"
-				m.list.SetShowHelp(true)
+				m.list.SetFocus(true)
 				m.table.Blur()
 			}
 			return m, nil
@@ -125,7 +69,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// 리스트 아이템 선택 처리
 	if m.focus == "list" {
-		if i, ok := m.list.SelectedItem().(item); ok {
+		if i, ok := m.list.SelectedItem(); ok {
 			// 선택된 아이템에 따라 테이블 데이터 업데이트
 			rows := []table.Row{
 				{"1", i.title + " - Detail 1", "100"},
