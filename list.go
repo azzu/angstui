@@ -56,9 +56,11 @@ func (m ListModel) Update(msg tea.Msg) (ListModel, tea.Cmd) {
 			case "down", "j":
 				m.list.CursorDown()
 			case "enter":
-				// 선택된 아이템 처리
+				// Enter 키를 눌렀을 때 선택 이벤트를 발생시킴
 				if _, ok := m.list.SelectedItem().(item); ok {
-					// 여기서 선택된 아이템에 대한 처리를 할 수 있습니다.
+					return m, tea.Cmd(func() tea.Msg {
+						return ItemSelectedMsg{Item: m.list.SelectedItem().(item)}
+					})
 				}
 			}
 		}
@@ -94,4 +96,9 @@ func (m ListModel) SetFocus(focus bool) {
 	} else {
 		m.list.SetShowHelp(false)
 	}
+}
+
+// ItemSelectedMsg는 아이템이 선택되었을 때 발생하는 메시지
+type ItemSelectedMsg struct {
+	Item item
 }
