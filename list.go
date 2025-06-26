@@ -38,6 +38,9 @@ func NewListModel() ListModel {
 		MarginLeft(2).
 		Foreground(lipgloss.Color("205"))
 
+	// 첫 번째 아이템에 포커스 설정
+	l.Select(0)
+
 	return ListModel{
 		list:  l,
 		focus: true,
@@ -56,12 +59,16 @@ func (m ListModel) Update(msg tea.Msg) (ListModel, tea.Cmd) {
 			case "down", "j":
 				m.list.CursorDown()
 			case "enter":
-				// Enter 키를 눌렀을 때 선택 이벤트를 발생시킴
-				if _, ok := m.list.SelectedItem().(item); ok {
+				// Enter 키를 눌렀을 때만 선택 이벤트를 발생시킴
+				if selectedItem, ok := m.list.SelectedItem().(item); ok {
 					return m, tea.Cmd(func() tea.Msg {
-						return ItemSelectedMsg{Item: m.list.SelectedItem().(item)}
+						return ItemSelectedMsg{Item: selectedItem}
 					})
 				}
+			default:
+				// Enter 키가 아닌 다른 키는 기본 리스트 동작으로 처리
+				m.list, cmd = m.list.Update(msg)
+				return m, cmd
 			}
 		}
 	}
